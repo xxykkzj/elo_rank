@@ -6,20 +6,62 @@ import seaborn as sns
 from datetime import datetime
 from sklearn.cluster import KMeans
 from sklearn.metrics import log_loss
+import glob
+# Load and combine data with explicit data type handling for 'tourney_date'
+def load_data(file):
+    return pd.read_csv(file, dtype={'tourney_date': 'str'})
 
-# Load and combine data
-path = 'C:/Users/biand/Downloads/tennis_atp/'
+path = 'C:/Users/biand/Downloads/tennis_atp/project/tennis_atp/'
 files = glob.glob(path + 'atp_matches_*.csv')
-raw_matches = pd.concat((pd.read_csv(file) for file in files), ignore_index=True)
+raw_matches = pd.concat((load_data(file) for file in files), ignore_index=True)
 
-# Select and manipulate columns
-matches_df = raw_matches[['tourney_date', 'tourney_name', 'surface', 'draw_size', 'tourney_level', 'match_num', 'winner_id', 'loser_id', 'best_of', 'winner_rank', 'winner_rank_points', 'loser_rank', 'loser_rank_points']]
+# Now 'tourney_date' is read as string and can be converted to datetime without floating point issues
+raw_matches['tourney_date'] = pd.to_datetime(raw_matches['tourney_date'], format='%Y%m%d')
+
+# Assuming raw_matches is already loaded with data
+
+# Selecting columns
+matches_df = raw_matches[['tourney_date', 'tourney_name', 'surface', 'draw_size', 
+                          'tourney_level', 'match_num', 'winner_id', 'loser_id', 
+                          'best_of', 'winner_rank', 'winner_rank_points', 
+                          'loser_rank', 'loser_rank_points']].copy()
+
+# Converting to appropriate types
 matches_df['tourney_name'] = matches_df['tourney_name'].astype('category')
 matches_df['surface'] = matches_df['surface'].astype('category')
 matches_df['best_of'] = matches_df['best_of'].astype('category')
+# Find entries that are not of expected length for format '%Y%m%d' which should be 8 characters long
+invalid_dates = matches_df[matches_df['tourney_date'].apply(lambda x: len(str(x)) != 8)]
+print(invalid_dates)
+#####invalid_dates.to_csv('C:/Users/biand/Downloads/tennis_atp/project/invalid_dates.csv', index=False)
+matches_df['tourney_date'] = pd.to_datetime(matches_df['tourney_date'], format='%Y%m%d', errors='coerce')
+# Check how many NaT values were created
+print(matches_df['tourney_date'].isna().sum())
+
+#drop these rows or fill them with a placeholder date
+matches_df.dropna(subset=['tourney_date'], inplace=True) 
+
+
+# Replace infinite values and drop rows with NaN values in specific columns
+matches_df.replace([np.inf, -np.inf], np.nan, inplace=True)
+matches_df.dropna(subset=['winner_rank', 'winner_rank_points', 'loser_rank', 'loser_rank_points'], inplace=True)
+
+# Convert IDs and ranks to integers, handling any non-finite numbers beforehand
 matches_df['winner_id'] = matches_df['winner_id'].astype(int)
 matches_df['loser_id'] = matches_df['loser_id'].astype(int)
-matches_df['tourney_date'] = pd.to_datetime(matches_df['tourney_date'], format='%Y%m%d')
+
+# Assuming winner_rank and loser_rank should be integers
+matches_df['winner_rank'] = matches_df['winner_rank'].fillna(-1).astype(int)  # Fill NaNs with -1 or another placeholder
+matches_df['loser_rank'] = matches_df['loser_rank'].fillna(-1).astype(int)
+
+# If the rank points can be floats and need rounding or other handling, adjust as necessary:
+matches_df['winner_rank_points'] = matches_df['winner_rank_points'].fillna(0).astype(int)
+matches_df['loser_rank_points'] = matches_df['loser_rank_points'].fillna(0).astype(int)
+# Define higher_rank_won based on rank comparison
+matches_df['higher_rank_won'] = matches_df['winner_rank'] < matches_df['loser_rank']
+# Print the DataFrame to verify changes
+print(matches_df.head())
+
 
 # Initialize Elo scores
 initial_elo = 1500
@@ -68,6 +110,23 @@ for index, match in matches_train_df.iterrows():
     elo_scores.loc[elo_scores['player_id'] == winner_id, 'elo'] += elo_change_538
     elo_scores.loc[elo_scores['player_id'] == loser_id, 'elo'] -= elo_change_538
 
-# Save dataset
-filtered_df = matches_df[matches_df['winner_id'].isin([105554, 103852]) | matches_df['loser_id'].isin([105554, 103852])]
-filtered_df.to_csv('C:/Users/biand/Downloads/tennis_atp/project/filtered_ds.csv', index=False)
+
+# Calculate statistics for the naive model on the training set
+N_train = len(matches_train_df)
+naive_accuracy_train = matches_train_df['higher_rank_won'].mean()
+w_train = matches_train_df['higher_rank_won']
+pi_naive_train = naive_accuracy_train
+log_loss_naive_train = -1 / N_train * np.sum(w_train * np.log(pi_naive_train) + (1 - w_train) * np.log(1 - pi_naive_train))
+calibration_naive_train = pi_naive_train * N_train / np.sum(w_train)
+
+# Calculate statistics for the naive model on the testing set
+N_test = len(matches_test_df)
+naive_accuracy_test = matches_test_df['higher_rank_won'].mean()
+w_test = matches_test_df['higher_rank_won']
+pi_naive_test = naive_accuracy_test
+log_loss_naive_test = -1 / N_test * np.sum(w_test * np.log(pi_naive_test) + (1 - w_test) * np.log(1 - pi_naive_test))
+calibration_naive_test = pi_naive_test * N_test / np.sum(w_test)
+
+
+
+
