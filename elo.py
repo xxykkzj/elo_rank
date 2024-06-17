@@ -41,7 +41,6 @@ print(matches_df['tourney_date'].isna().sum())
 #drop these rows or fill them with a placeholder date
 matches_df.dropna(subset=['tourney_date'], inplace=True) 
 
-
 # Replace infinite values and drop rows with NaN values in specific columns
 matches_df.replace([np.inf, -np.inf], np.nan, inplace=True)
 matches_df.dropna(subset=['winner_rank', 'winner_rank_points', 'loser_rank', 'loser_rank_points'], inplace=True)
@@ -127,6 +126,52 @@ pi_naive_test = naive_accuracy_test
 log_loss_naive_test = -1 / N_test * np.sum(w_test * np.log(pi_naive_test) + (1 - w_test) * np.log(1 - pi_naive_test))
 calibration_naive_test = pi_naive_test * N_test / np.sum(w_test)
 
+#Logistic
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss
 
+# Assuming 'diff' is already defined in your DataFrame
+# Fit logistic regression model on the training set
+logistic_model = LogisticRegression()
+logistic_model.fit(matches_train_df[['diff']], matches_train_df['higher_rank_won'])
+
+# Predict probabilities of winning for the training set
+probs_of_winning_train = logistic_model.predict_proba(matches_train_df[['diff']])[:, 1]
+
+# Convert probabilities to binary predictions using a threshold of 0.5
+preds_logistic_train = (probs_of_winning_train > 0.5).astype(int)
+
+# Calculate accuracy, log-loss, and calibration for the training set
+accuracy_logistic_train = np.mean(preds_logistic_train == matches_train_df['higher_rank_won'])
+log_loss_logistic_train = log_loss(matches_train_df['higher_rank_won'], probs_of_winning_train)
+calibration_logistic_train = np.sum(probs_of_winning_train) / np.sum(matches_train_df['higher_rank_won'])
+
+# Generate data for plotting logistic regression predictions
+x_values = np.linspace(0, 10000, 10000)
+x_values_reshaped = x_values.reshape(-1, 1)
+probs = logistic_model.predict_proba(x_values_reshaped)[:, 1]
+
+# Plotting
+plt.figure(figsize=(10, 6))
+plt.plot(x_values, probs, label='Probability of Higher Rank Winning')
+plt.xlabel("Player's Difference in Points")
+plt.ylabel("Probability of the Higher Ranked Overcome")
+plt.title("Probability of Winning vs Point Difference")
+plt.legend()
+plt.show()
+
+# Generate data for plotting logistic regression predictions
+x_values = np.linspace(0, 10000, 10000)
+x_values_reshaped = x_values.reshape(-1, 1)
+probs = logistic_model.predict_proba(x_values_reshaped)[:, 1]
+
+# Plotting
+plt.figure(figsize=(10, 6))
+plt.plot(x_values, probs, label='Probability of Higher Rank Winning')
+plt.xlabel("Player's Difference in Points")
+plt.ylabel("Probability of the Higher Ranked Overcome")
+plt.title("Probability of Winning vs Point Difference")
+plt.legend()
+plt.show()
 
 
