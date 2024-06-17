@@ -56,8 +56,12 @@ matches_df['loser_rank'] = matches_df['loser_rank'].fillna(-1).astype(int)
 # If the rank points can be floats and need rounding or other handling, adjust as necessary:
 matches_df['winner_rank_points'] = matches_df['winner_rank_points'].fillna(0).astype(int)
 matches_df['loser_rank_points'] = matches_df['loser_rank_points'].fillna(0).astype(int)
+matches_df['winner_rank_points'] = pd.to_numeric(matches_df['winner_rank_points'], errors='coerce')
+matches_df['loser_rank_points'] = pd.to_numeric(matches_df['loser_rank_points'], errors='coerce')
+
 # Define higher_rank_won based on rank comparison
 matches_df['higher_rank_won'] = matches_df['winner_rank'] < matches_df['loser_rank']
+matches_df['diff'] = matches_df['winner_rank_points'] - matches_df['loser_rank_points']
 # Print the DataFrame to verify changes
 print(matches_df.head())
 
@@ -91,24 +95,30 @@ delta = 100
 nu = 5
 sigma = 0.1
 
+# Convert DataFrame to a dictionary for faster access
+elo_dict = elo_scores.set_index('player_id')['elo'].to_dict()
+
+# Process each match
 for index, match in matches_train_df.iterrows():
     winner_id = match['winner_id']
     loser_id = match['loser_id']
-    winner_elo = elo_scores.loc[elo_scores['player_id'] == winner_id, 'elo'].values[0]
-    loser_elo = elo_scores.loc[elo_scores['player_id'] == loser_id, 'elo'].values[0]
+    winner_elo = elo_dict[winner_id]
+    loser_elo = elo_dict[loser_id]
     outcome = match['higher_rank_won']
-    
+
     # K-factor model update
     elo_change_k = k_factor_model_update(k, winner_elo, loser_elo, outcome)
-    elo_scores.loc[elo_scores['player_id'] == winner_id, 'elo'] += elo_change_k
-    elo_scores.loc[elo_scores['player_id'] == loser_id, 'elo'] -= elo_change_k
+    elo_dict[winner_id] += elo_change_k
+    elo_dict[loser_id] -= elo_change_k
     
     # FiveThirtyEight model update
     games_played = match['match_num']
     elo_change_538 = fivethirtyeight_model_update(games_played, delta, nu, sigma, winner_elo, loser_elo, outcome)
-    elo_scores.loc[elo_scores['player_id'] == winner_id, 'elo'] += elo_change_538
-    elo_scores.loc[elo_scores['player_id'] == loser_id, 'elo'] -= elo_change_538
+    elo_dict[winner_id] += elo_change_538
+    elo_dict[loser_id] -= elo_change_538
 
+# After loop, update the DataFrame
+elo_scores['elo'] = elo_scores['player_id'].map(elo_dict)
 
 # Calculate statistics for the naive model on the training set
 N_train = len(matches_train_df)
@@ -145,20 +155,6 @@ preds_logistic_train = (probs_of_winning_train > 0.5).astype(int)
 accuracy_logistic_train = np.mean(preds_logistic_train == matches_train_df['higher_rank_won'])
 log_loss_logistic_train = log_loss(matches_train_df['higher_rank_won'], probs_of_winning_train)
 calibration_logistic_train = np.sum(probs_of_winning_train) / np.sum(matches_train_df['higher_rank_won'])
-
-# Generate data for plotting logistic regression predictions
-x_values = np.linspace(0, 10000, 10000)
-x_values_reshaped = x_values.reshape(-1, 1)
-probs = logistic_model.predict_proba(x_values_reshaped)[:, 1]
-
-# Plotting
-plt.figure(figsize=(10, 6))
-plt.plot(x_values, probs, label='Probability of Higher Rank Winning')
-plt.xlabel("Player's Difference in Points")
-plt.ylabel("Probability of the Higher Ranked Overcome")
-plt.title("Probability of Winning vs Point Difference")
-plt.legend()
-plt.show()
 
 # Generate data for plotting logistic regression predictions
 x_values = np.linspace(0, 10000, 10000)
