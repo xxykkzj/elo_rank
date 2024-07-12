@@ -582,3 +582,11 @@ ggplot(elo_history_filtered, aes(x = tourney_date)) +
   theme_minimal()
 
 ```
+
+```{r}
+#save dataset
+#saveRDS(filtered_df, file = "C:\\Users\\biand\\Downloads\\tennis_atp\\project\\filtered_ds.rds")
+#write.csv(filtered_df, file = "C:\\Users\\biand\\Downloads\\tennis_atp\\project\\filtered_ds.csv")
+```
+
+

@@ -1,5 +1,5 @@
 ## -----------------------------------------------------------------------------
-pacman::p_load(tidyverse, lubridate, patchwork, knitr)
+pacman::p_load(tidyverse, lubridate, patchwork, knitr, welo)
 
 
 ## -----------------------------------------------------------------------------
@@ -55,8 +55,17 @@ ggplot(filtered_df, aes(x = tourney_date, y = player_rank, group = player_id, co
        x = "Year",
        y = "Ranking") +
   theme_minimal() +
-  theme(legend.position = "bottom") # Ensure the legend is at the bottom
-
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(size = 20),  # Adjust title font size
+    axis.title.x = element_text(size = 15),  # Adjust x-axis label font size
+    axis.title.y = element_text(size = 15),  # Adjust y-axis label font size
+    axis.text.x = element_text(size = 12),   # Adjust x-axis tick label font size
+    axis.text.y = element_text(size = 12),   # Adjust y-axis tick label font size
+    legend.text = element_text(size = 12),   # Adjust legend text font size
+    legend.title = element_text(size = 15)   # Adjust legend title font size
+  )
+ggsave("plot0.png")
 
 ## -----------------------------------------------------------------------------
 matches_df <- matches_df %>%
@@ -79,7 +88,6 @@ matches_df <- matches_df %>%
 ## -----------------------------------------------------------------------------
 matches_df <- matches_df |>
 mutate(diff = higher_rank_points - lower_rank_points)
-
 
 ## -----------------------------------------------------------------------------
 # Split data into training and testing sets
@@ -174,13 +182,17 @@ summary(fit_diff)
 tmp_diff <- tibble(diff = c(0:10000))
 prob_diff <- tibble(prob = predict(fit_diff, tmp_diff, type = 'response'))
 tmp_df <- tibble(diff = tmp_diff$diff, prob = prob_diff$prob)
-ggplot(aes(x = diff, y = prob), data = tmp_df) +
-geom_line() +
-xlab("player's difference in points") +
-ylab("probability of the higher ranked overcome") +
-theme_light()
+ggplot(aes(x = diff, y = prob), data = tmp_df)+
+  geom_line() +
+  xlab("player's difference in points") +
+  ylab("probability of the higher ranked overcome") +
+  theme_light()  +
+  theme(
+    axis.title.x = element_text(size = 18),  
+    axis.title.y = element_text(size = 18)   
+  )
 
-
+ggsave("plot1.png", width = 5, height = 4)
 
 ## -----------------------------------------------------------------------------
 probs_of_winning_train <- predict(fit_diff, matches_train_df, type = "response")
@@ -519,5 +531,4 @@ ggplot(elo_history_filtered, aes(x = tourney_date)) +
        color = "Player",
        linetype = "Model") +
   theme_minimal()
-
 
