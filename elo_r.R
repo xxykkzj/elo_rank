@@ -49,22 +49,22 @@ filtered_df$player_id <- factor(filtered_df$player_id,
 # Now let's plot the rankings over time using ggplot
 ggplot(filtered_df, aes(x = tourney_date, y = player_rank, group = player_id, color = player_id)) +
   geom_line() +
-  scale_y_reverse() + # Reverse the scale to have the best rank at the top
+  scale_y_reverse() + 
   scale_color_discrete(name = "Player", labels = c('Daniel Evans', 'Feliciano Lopez')) + # Custom legend for player names
   labs(title = "Rankings of Two Players in 2010-2019",
        x = "Year",
        y = "Ranking") +
-  theme_minimal() +
+  theme_light() +
   theme(
     legend.position = "bottom",
-    plot.title = element_text(size = 20),  # Adjust title font size
-    axis.title.x = element_text(size = 15),  # Adjust x-axis label font size
-    axis.title.y = element_text(size = 15),  # Adjust y-axis label font size
-    axis.text.x = element_text(size = 12),   # Adjust x-axis tick label font size
-    axis.text.y = element_text(size = 12),   # Adjust y-axis tick label font size
-    legend.text = element_text(size = 12),   # Adjust legend text font size
-    legend.title = element_text(size = 15)   # Adjust legend title font size
-  )
+    plot.title = element_text(size = 40,hjust = 0.5), 
+    axis.title.x = element_text(size = 30), 
+    axis.title.y = element_text(size = 30), 
+    axis.text.x = element_text(size = 16),
+    axis.text.y = element_text(size = 16), 
+    legend.text = element_text(size = 30), 
+    legend.title = element_text(size = 30)
+    )
 ggsave("plot0.png")
 
 ## -----------------------------------------------------------------------------
@@ -131,18 +131,13 @@ log_loss_naive_full <- -1 / N_full* sum(w_full * log(pi_naive_full) + (1 - w_ful
 calibration_naive_full <- naive_accuracy_full * N_full / sum(matches_df$higher_rank_won)
 
 # Add new row of naive model statistics to the validation_stats dataframe
-validation_stats <- tibble(
+validation_stats_full <- tibble(
     model = "naive",
     pred_acc = naive_accuracy_full,
     log_loss = log_loss_naive_full,
     calibration = calibration_naive_full,
     dataset = "Full Set"
   )
-
-# Display the validation statistics as a table using knitr's kable
-kable(validation_stats)
-
-
 
 ## -----------------------------------------------------------------------------
 validation_stats_train <- tibble(
@@ -163,12 +158,12 @@ validation_stats_test <- tibble(
 
 
 ## -----------------------------------------------------------------------------
-validation_stats <- bind_rows(validation_stats_train, validation_stats_test)
+validation_stats <- bind_rows(validation_stats_train, validation_stats_test,validation_stats_full)
 
 
 ## -----------------------------------------------------------------------------
 print(knitr::kable(validation_stats))
-
+write.csv(validation_stats, file = "validation_stats_naive.csv", row.names = FALSE)
 
 ## -----------------------------------------------------------------------------
 fit_diff <- glm(
@@ -189,14 +184,14 @@ ggplot(aes(x = diff, y = prob), data = tmp_df)+
   theme_light()  +
   theme(
     axis.title.x = element_text(size = 18),  
-    axis.title.y = element_text(size = 18)   
+    axis.title.y = element_text(size = 18),
+    axis.text.x = element_text(size = 15,face = "bold"),
+    axis.text.y = element_text(size = 15,face = "bold")
   )
-
 ggsave("plot1.png", width = 5, height = 4)
 
 ## -----------------------------------------------------------------------------
 probs_of_winning_train <- predict(fit_diff, matches_train_df, type = "response")
-
 
 ## -----------------------------------------------------------------------------
 preds_logistic_train <- ifelse(probs_of_winning_train > 0.5, 1, 0)
@@ -269,24 +264,25 @@ log_loss_logistic <- -1 / N * sum(w * log(probs_of_winning) + (1 - w) * log(1 - 
 calibration_logistic <- sum(probs_of_winning) / sum(w)
 
 # Add new row of logistic model statistics to the validation_stats dataframe
-validation_stats <- validation_stats |>
+validation_stats_full <- validation_stats |>
   add_row(
     model = "logistic",
     pred_acc = accuracy_logistic,
     log_loss = log_loss_logistic,
-    calibration = calibration_logistic
+    calibration = calibration_logistic,
+    dataset="Full Set"
   )
 
 
 
 
 ## -----------------------------------------------------------------------------
-validation_stats <- bind_rows(validation_stats_train, validation_stats_test)
+validation_stats <- bind_rows(validation_stats_train, validation_stats_test,validation_stats_full)
 
 
 ## -----------------------------------------------------------------------------
 print(knitr::kable(validation_stats))
-
+write.csv(validation_stats, file = "validation_stats_logi.csv", row.names = FALSE)
 
 ## -----------------------------------------------------------------------------
 initial_elo <- 1500
@@ -448,11 +444,10 @@ validation_stats <- validation_stats %>% filter(model == "elo")
 
 # Display the validation statistics
 kable(validation_stats)
-
+write.csv(validation_stats, file = "validation_stats_elo.csv", row.names = FALSE)
 
 
 ## -----------------------------------------------------------------------------
-# Assuming 'matches_df' is ordered chronologically
 
 # Initialize Elo scores for all players for both models
 elo_scores_k <- data.frame(player_id = unique(c(matches_df$winner_id, matches_df$loser_id)),
@@ -532,3 +527,9 @@ ggplot(elo_history_filtered, aes(x = tourney_date)) +
        linetype = "Model") +
   theme_minimal()
 
+
+
+k_value <- 25
+delta_value <- 100
+nu_value <- 5
+sigma_value <- 0.1
