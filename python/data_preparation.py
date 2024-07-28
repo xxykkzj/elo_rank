@@ -1,19 +1,23 @@
 import pandas as pd
 
+def prepare_data(file_path):
+    # Load the data
+    matches_df = pd.read_csv(file_path)
 
-def split_data(df, split_date='2019-01-01'):
-    # Convert tourney_date to datetime and handle errors
-    df['tourney_date'] = pd.to_datetime(df['tourney_date'], format='%Y%m%d', errors='coerce')
-    
-    # Debug statement to check the data types and any potential issues with date conversion
-    print("Data types after conversion:\n", df.dtypes)
-    print("Summary of tourney_date column:\n", df['tourney_date'].describe())
-    
-    # Drop rows where tourney_date could not be converted
-    df = df.dropna(subset=['tourney_date'])
-    
-    # Split the data into training and testing sets
-    split_date = pd.to_datetime(split_date)
-    train_df = df[df['tourney_date'] < split_date]
-    test_df = df[df['tourney_date'] >= split_date]
-    return train_df, test_df
+    # Remove non-date characters and convert to datetime
+    matches_df['tourney_date'] = matches_df['tourney_date'].str.extract(r'(\d{4}-\d{2}-\d{2})')[0]
+    matches_df['tourney_date'] = pd.to_datetime(matches_df['tourney_date'], format='%Y-%m-%d', errors='coerce')
+
+    # Determine higher-ranked player and whether they won
+    matches_df['higher_rank'] = matches_df[['winner_rank', 'loser_rank']].min(axis=1)
+    matches_df['higher_rank_won'] = matches_df.apply(
+        lambda row: row['winner_rank'] < row['loser_rank'], axis=1).astype(int)
+
+    return matches_df
+
+def split_data(matches_df, split_ratio=0.8):
+    matches_df = matches_df.sort_values(by='tourney_date').reset_index(drop=True)
+    split_index = int(len(matches_df) * split_ratio)
+    matches_train_df = matches_df.iloc[:split_index]
+    matches_test_df = matches_df.iloc[split_index:]
+    return matches_train_df, matches_test_df

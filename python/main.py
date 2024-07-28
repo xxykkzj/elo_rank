@@ -1,5 +1,7 @@
 import os
-os.chdir(r"C:\Users\biand\Downloads\tennis_atp\project\python")
+pathway = "C:/Users/biand\Downloads/tennis_atp/project"
+dataset = "filtered_ds.csv"
+os.chdir(pathway)
 print("Current directory:", os.getcwd())
 
 import data_preparation as dp
@@ -10,10 +12,10 @@ import plots as pl
 import pandas as pd
 import importlib
 # Load and prepare data
-matches_df = pd.read_csv(r"C:\Users\biand\Downloads\tennis_atp\project\filtered_ds.csv")
-importlib.reload(dp)
+#importlib.reload(dp)
+matches_df = dp.prepare_data(dataset)
 # Split data into training and testing sets
-matches_df.describe()
+
 matches_df['tourney_date'].to_string()
 matches_df['tourney_date'] = pd.to_datetime(matches_df['tourney_date'], format='%Y%m%d', errors='coerce')
 matches_train_df, matches_test_df = dp.split_data(matches_df)
