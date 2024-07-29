@@ -11,6 +11,7 @@ import validation as val
 import plots as pl
 import pandas as pd
 import importlib
+
 # Load and prepare data
 #importlib.reload(dp)
 matches_df = dp.prepare_data(dataset)
@@ -18,13 +19,19 @@ matches_df = dp.prepare_data(dataset)
 
 matches_train_df, matches_test_df = dp.split_data(matches_df)
 
+# Tune parameters for Elo and FiveThirtyEight models
+best_params_elo, best_params_fte = tn.tune_models(matches_train_df)
+print("Best parameters for Elo model:", best_params_elo)
+print("Best parameters for FiveThirtyEight model:", best_params_fte)
+
+
 # Initialize Elo scores
 initial_elo = 1500
 elo_scores = elo.initialize_elo_scores(matches_df, initial_elo)
 elo_scores_538 = fte.initialize_elo_scores(matches_df, initial_elo)
 
 # Update Elo scores
-elo_scores = elo.update_elo_scores_elo(matches_train_df, elo_scores, k=25)
+elo_scores = elo.update_elo_scores_elo(matches_train_df, elo_scores, k=14)
 elo_scores_538 = fte.update_elo_scores_538(matches_train_df, elo_scores_538, delta=100, nu=5, sigma=0.1)
 
 # Calculate performance metrics
