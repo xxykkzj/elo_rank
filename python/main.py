@@ -13,10 +13,10 @@ matches_df = dp.prepare_data(r"filtered_ds.csv")
 matches_train_df, matches_test_df = dp.split_data(matches_df)
 
 # Tune models
-# best_params_elo, best_params_fte = tn.tune_models(matches_train_df, matches_test_df, matches_df)
+best_params_elo, best_params_fte = tn.tune_models(matches_train_df, matches_test_df, matches_df)
 
-# print(f"Best parameters for Elo model: {best_params_elo}")
-# print(f"Best parameters for FiveThirtyEight model: {best_params_fte}")
+print(f"Best parameters for Elo model: {best_params_elo}")
+print(f"Best parameters for FiveThirtyEight model: {best_params_fte}")
 
 # Train final models with best parameters
 elo_scores = elo.initialize_elo_scores(matches_df, initial_elo=1500)
@@ -31,5 +31,3 @@ metrics_fte = val.calculate_metrics(matches_train_df, matches_test_df, matches_d
 print(metrics_elo)
 print(metrics_fte)
 
-# Plot results
-#pl.plot_results(matches_train_df, matches_test_df, matches_df, elo_scores, fte_scores)
