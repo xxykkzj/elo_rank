@@ -1,5 +1,5 @@
 import os
-pathway = "C:/Users/biand\Downloads/tennis_atp/project"
+pathway = "E:/assignment/elo_rank/python"
 dataset = "filtered_ds.csv"
 os.chdir(pathway)
 print("Current directory:", os.getcwd())
@@ -11,9 +11,10 @@ import validation as val
 import plots as pl
 import pandas as pd
 import importlib
+import tunning as tn
 
 # Load and prepare data
-#importlib.reload(dp)
+importlib.reload(tn)
 matches_df = dp.prepare_data(dataset)
 # Split data into training and testing sets
 

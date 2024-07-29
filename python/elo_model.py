@@ -1,3 +1,6 @@
+import pandas as pd
+import numpy as np
+
 def initialize_elo_scores(matches_df, initial_elo):
     unique_ids = pd.concat([matches_df['winner_id'], matches_df['loser_id']]).unique()
     elo_scores = pd.DataFrame({'player_id': unique_ids, 'elo': np.full(len(unique_ids), initial_elo, dtype=float)})
