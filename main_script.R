@@ -5,6 +5,7 @@ source("elo_model.R")
 source("538_model.R")
 source("validation.R")
 source("plots.R")
+source('tunning.R')
 
 # Load and prepare data
 pacman::p_load(tidyverse, lubridate, patchwork, knitr, welo)
@@ -35,6 +36,7 @@ metrics_538 <- calculate_metrics(matches_train_df, matches_test_df, matches_df, 
 # Print metrics
 print(metrics_elo)
 print(metrics_538)
+
 
 
 
