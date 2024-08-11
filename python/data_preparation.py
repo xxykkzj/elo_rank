@@ -4,9 +4,9 @@ def prepare_data(file_path):
     # Load the data
     matches_df = pd.read_csv(file_path)
 
-    # Remove non-date characters and convert to datetime
-    matches_df['tourney_date'] = matches_df['tourney_date'].str.extract(r'(\d{4}-\d{2}-\d{2})')[0]
-    matches_df['tourney_date'] = pd.to_datetime(matches_df['tourney_date'], format='%Y-%m-%d', errors='coerce')
+    #Extract strings
+    matches_df['tourney_date'] = matches_df['tourney_date'].astype(str).str.extract(r'(\d{4}\d{2}\d{2})')[0]
+    matches_df['tourney_date'] = pd.to_datetime(matches_df['tourney_date'], format='%Y%m%d', errors='coerce')
 
     # Determine higher-ranked player and whether they won
     matches_df['higher_rank'] = matches_df[['winner_rank', 'loser_rank']].min(axis=1)
