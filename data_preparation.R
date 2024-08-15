@@ -1,7 +1,6 @@
 prepare_data <- function() {
   # Create a vector of file names to read
-  setwd("E:/assignment/elo_rank/tennis_atp")
-  files <- str_glue("atp_matches_{2010:2019}.csv")
+  files <- str_glue("tennis_atp/atp_matches_{2010:2019}.csv")
 
   # Read each file and combine them into one data frame
   raw_matches <- map_dfr(files, ~read_csv(.x, show_col_types = FALSE))

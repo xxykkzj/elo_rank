@@ -1,0 +1,4 @@
+"model","pred_acc","log_loss","calibration","dataset"
+"naive",0.670219291519706,0.634023227973475,1,"training"
+"naive",0.613432835820895,0.667187743522127,1,"testing"
+"naive",0.664928382700598,0.637712262140784,1,"Full Set"

@@ -21,7 +21,7 @@ calculate_elo_metrics <- function(matches_subset, elo_scores) {
            elo_probs = 1 / (1 + 10^((loser_elo - winner_elo) / 400)),
            elo_predictions = as.integer(winner_elo > loser_elo))
 
-  accuracy <- mean(matches_subset$elo_predictions == matches_subset$higher_rank_won)
+  accuracy <- mean(matches_subset$elo_predictions==matches_subset$higher_rank_won)
   log_loss <- -mean(matches_subset$higher_rank_won * log(matches_subset$elo_probs) + 
                     (1 - matches_subset$higher_rank_won) * log(1 - matches_subset$elo_probs))
   calibration <- sum(matches_subset$elo_probs) / sum(matches_subset$higher_rank_won)

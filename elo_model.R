@@ -9,22 +9,19 @@ k_factor_model_update <- function(k, winner_elo, loser_elo, outcome) {
 }
 
 update_elo_scores_elo <- function(matches, elo_scores, k) {
-  matches <- matches %>%
-    mutate(winner_elo = elo_scores$elo[match(winner_id, elo_scores$player_id)],
-           loser_elo = elo_scores$elo[match(loser_id, elo_scores$player_id)])
+  for (i in 1:nrow(matches)) {
+    match <- matches[i, ]
+    winner_id <- match$winner_id
+    loser_id <- match$loser_id
 
-  matches <- matches %>%
-    mutate(elo_change = k_factor_model_update(k, winner_elo, loser_elo, higher_rank_won),
-           new_winner_elo = winner_elo + elo_change,
-           new_loser_elo = loser_elo - elo_change)
+    winner_elo <- elo_scores$elo[elo_scores$player_id == winner_id]
+    loser_elo <- elo_scores$elo[elo_scores$player_id == loser_id]
 
-  elo_scores <- bind_rows(
-    elo_scores,
-    matches %>% select(player_id = winner_id, elo = new_winner_elo),
-    matches %>% select(player_id = loser_id, elo = new_loser_elo)
-  ) %>%
-    group_by(player_id) %>%
-    summarize(elo = mean(elo))
+    elo_change <- k_factor_model_update(k, winner_elo, loser_elo, match$higher_rank_won)
+
+    elo_scores$elo[elo_scores$player_id == winner_id] <- winner_elo + elo_change
+    elo_scores$elo[elo_scores$player_id == loser_id] <- loser_elo - elo_change
+  }
 
   return(elo_scores)
 }
