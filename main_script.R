@@ -1,5 +1,5 @@
 
-setwd("E:/assignment/elo_rank")
+setwd("C:\Users\biand\Documents\project\elo_rank\main_script.R")
 source("data_preparation.R")
 source("elo_model.R")
 source("538_model.R")
