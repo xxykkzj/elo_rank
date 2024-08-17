@@ -92,4 +92,10 @@ prepare_top_and_bottom_players <- function(matches_df, top_n, bottom_m) {
 
 
 
+prepare_data_BCM<- function() {
+  # Create a vector of file names to read
+  files <- str_glue("tennis_bet/{2010:2019}.csv")
 
+  # Read each file and combine them into one data frame
+  raw_bet_df <- map_dfr(files, ~read_csv(.x, show_col_types = FALSE))
+}
