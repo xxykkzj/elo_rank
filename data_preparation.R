@@ -5,6 +5,7 @@ prepare_data <- function() {
   # Read each file and combine them into one data frame
   raw_matches <- map_dfr(files, ~read_csv(.x, show_col_types = FALSE))
 
+
   # Process the data frame
   matches_df <- raw_matches %>%
     select(tourney_date, tourney_name, surface, draw_size, tourney_level, match_num, winner_id, loser_id, best_of, winner_rank, winner_rank_points, loser_rank, loser_rank_points) %>%
@@ -16,8 +17,8 @@ prepare_data <- function() {
            higher_rank_won = winner_rank < loser_rank,
            higher_rank_points = winner_rank_points * (higher_rank_won) + loser_rank_points * (1 - higher_rank_won),
            lower_rank_points = winner_rank_points * (1 - higher_rank_won) + loser_rank_points * (higher_rank_won),
-           diff = higher_rank_points - lower_rank_points)
-
+           diff = higher_rank_points - lower_rank_points) %>%
+    filter(!(tourney_level %in% c('D', 'F')))  
   return(matches_df)
 }
 
@@ -89,5 +90,6 @@ prepare_top_and_bottom_players <- function(matches_df, top_n, bottom_m) {
   return(filtered_matches_df)
 }
 
-# Example usage:
-# filtered_df <- prepare_top_and_bottom_players(matches_df, top_n = 50, bottom_m = 50)
+
+
+
