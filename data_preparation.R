@@ -1,7 +1,7 @@
 prepare_data <- function() {
   # Create a vector of file names to read
   files <- str_glue("tennis_atp/atp_matches_{2010:2019}.csv")
-
+  
   # Read each file and combine them into one data frame
   raw_matches <- map_dfr(files, ~read_csv(.x, show_col_types = FALSE))
 
@@ -21,6 +21,8 @@ prepare_data <- function() {
     filter(!(tourney_level %in% c('D', 'F')))  
   return(matches_df)
 }
+
+
 
 split_data <- function(matches_df) {
   split_time <- ymd("2019-01-01")
@@ -92,10 +94,21 @@ prepare_top_and_bottom_players <- function(matches_df, top_n, bottom_m) {
 
 
 
-prepare_data_BCM<- function() {
-  # Create a vector of file names to read
-  files <- str_glue("tennis_bet/{2010:2019}.csv")
 
-  # Read each file and combine them into one data frame
-  raw_bet_df <- map_dfr(files, ~read_csv(.x, show_col_types = FALSE))
+
+prepare_data_BCM <- function() {
+  files_bcm <- c(str_glue("tennis_bet/{2010:2012}.xls"), str_glue("tennis_bet/{2013:2019}.xlsx"))
+  
+  # Read each file, treating 'N/A' as NA and reading all columns as text
+  raw_bet_df <- map_dfr(files_bcm, ~read_excel(.x, col_types = "text", na = "N/A"))
+  
+  # Convert relevant columns to numeric, handling other non-standard numeric entries
+  raw_bet_df <- raw_bet_df %>%
+    mutate(across(where(is.character), ~as.numeric(gsub("[^0-9.-]", "", .x))))  # Remove non-numeric characters and convert
+  
+  # Remove rows with any NA values
+  raw_bet_df <- raw_bet_df %>%
+    drop_na()
+  
+  return(raw_bet_df)
 }

@@ -1,4 +1,3 @@
-
 setwd("C:/Users/biand/Documents/project/elo_rank")
 source("data_preparation.R")
 source("elo_model.R")
@@ -8,8 +7,10 @@ source("plots.R")
 source("tunning.R")
 source("glicko_model.R")
 # Load and prepare data
-pacman::p_load(tidyverse, lubridate, patchwork, knitr, welo,ggplot2,caret)
+pacman::p_load(tidyverse, lubridate, patchwork, knitr, welo,ggplot2, caret, readxl)
 matches_df <- prepare_data()
+bets_df <- prepare_data_BCM()
+summary(bets_df)
 # Split data into training and testing sets
 splits <- split_data(matches_df)
 matches_train_df <- splits$train
